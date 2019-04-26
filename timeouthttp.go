@@ -3,6 +3,7 @@ package timeouthttp
 import (
 	"net"
 	"net/http"
+	"runtime"
 	"time"
 )
 
@@ -25,6 +26,7 @@ func DefaultPooledTransport(config Config) *http.Transport {
 		TLSHandshakeTimeout:   time.Duration(config.ConnectTimeout) * time.Second,
 		MaxIdleConnsPerHost:   config.MaxIdleConnectionsPerHost,
 		ResponseHeaderTimeout: time.Duration(config.RequestTimeout) * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
 		DisableKeepAlives:     false,
 	}
 }
@@ -46,7 +48,7 @@ func setDefaults(config *Config) {
 	}
 
 	if config.MaxIdleConnectionsPerHost == 0 {
-		config.MaxIdleConnectionsPerHost = 1
+		config.MaxIdleConnectionsPerHost = runtime.GOMAXPROCS(0) + 1
 	}
 }
 
