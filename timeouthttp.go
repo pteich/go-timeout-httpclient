@@ -23,10 +23,6 @@ func DefaultPooledTransport(config Config) *http.Transport {
 			Timeout:   time.Duration(config.ConnectTimeout) * time.Second,
 			KeepAlive: time.Duration(config.KeepAliveTimeout) * time.Second,
 		}).DialContext,
-		DialTLS: (&net.Dialer{
-			Timeout:   time.Duration(config.ConnectTimeout) * time.Second,
-			KeepAlive: time.Duration(config.KeepAliveTimeout) * time.Second,
-		}).Dial,
 		TLSHandshakeTimeout:   time.Duration(config.ConnectTimeout) * time.Second,
 		MaxIdleConnsPerHost:   config.MaxIdleConnectionsPerHost,
 		ResponseHeaderTimeout: time.Duration(config.RequestTimeout) * time.Second,
