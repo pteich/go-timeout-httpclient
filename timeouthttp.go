@@ -14,6 +14,7 @@ type Config struct {
 	RequestTimeout            int
 	KeepAliveTimeout          int
 	MaxIdleConnectionsPerHost int
+	KeepAlive                 bool
 }
 
 func DefaultPooledTransport(config Config) *http.Transport {
@@ -27,7 +28,7 @@ func DefaultPooledTransport(config Config) *http.Transport {
 		MaxIdleConnsPerHost:   config.MaxIdleConnectionsPerHost,
 		ResponseHeaderTimeout: time.Duration(config.RequestTimeout) * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
-		DisableKeepAlives:     false,
+		DisableKeepAlives:     !config.KeepAlive,
 	}
 }
 
@@ -49,6 +50,22 @@ func setDefaults(config *Config) {
 
 	if config.MaxIdleConnectionsPerHost == 0 {
 		config.MaxIdleConnectionsPerHost = runtime.GOMAXPROCS(0) + 1
+	}
+}
+
+// New returns a new clean HTTP.Client with variable options set
+func New(opts ...Option) *http.Client {
+
+	config := Config{}
+	setDefaults(&config)
+
+	for _, opt := range opts {
+		opt(&config)
+	}
+
+	return &http.Client{
+		Transport: DefaultTransport(config),
+		Timeout:   time.Duration(config.RequestTimeout) * time.Second,
 	}
 }
 
