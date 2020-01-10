@@ -1,6 +1,7 @@
 package timeouthttp
 
 import (
+	"crypto/tls"
 	"net"
 	"net/http"
 	"runtime"
@@ -15,11 +16,13 @@ type Config struct {
 	KeepAliveTimeout          int
 	MaxIdleConnectionsPerHost int
 	KeepAlive                 bool
+	tlsConfig                 *tls.Config
 }
 
 func DefaultPooledTransport(config Config) *http.Transport {
 	return &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		TLSClientConfig: config.tlsConfig,
+		Proxy:           http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			Timeout:   time.Duration(config.ConnectTimeout) * time.Second,
 			KeepAlive: time.Duration(config.KeepAliveTimeout) * time.Second,
