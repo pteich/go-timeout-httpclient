@@ -35,7 +35,6 @@ func setDefaults(config *Config) {
 
 // New returns a new clean HTTP.Client with variable options set
 func New(opts ...Option) *http.Client {
-
 	config := Config{}
 	setDefaults(&config)
 

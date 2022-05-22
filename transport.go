@@ -11,9 +11,9 @@ import (
 )
 
 type Transport struct {
-	ht      http.Transport
-	cb      bool
-	breaker sync.Map
+	ht                   http.Transport
+	enableCircuitBreaker bool
+	breaker              sync.Map
 }
 
 func DefaultPooledTransport(config Config) *Transport {
@@ -31,7 +31,7 @@ func DefaultPooledTransport(config Config) *Transport {
 			ExpectContinueTimeout: 1 * time.Second,
 			DisableKeepAlives:     !config.KeepAlive,
 		},
-		cb: config.circuitBreaker,
+		enableCircuitBreaker: config.circuitBreaker,
 	}
 }
 
@@ -43,7 +43,7 @@ func DefaultTransport(config Config) *Transport {
 }
 
 func (t *Transport) RoundTrip(r *http.Request) (*http.Response, error) {
-	if !t.cb {
+	if !t.enableCircuitBreaker {
 		return t.ht.RoundTrip(r)
 	}
 
