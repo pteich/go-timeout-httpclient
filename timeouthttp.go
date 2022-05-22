@@ -2,7 +2,6 @@ package timeouthttp
 
 import (
 	"crypto/tls"
-	"net"
 	"net/http"
 	"runtime"
 	"time"
@@ -17,29 +16,7 @@ type Config struct {
 	MaxIdleConnectionsPerHost int
 	KeepAlive                 bool
 	tlsConfig                 *tls.Config
-}
-
-func DefaultPooledTransport(config Config) *http.Transport {
-	return &http.Transport{
-		TLSClientConfig: config.tlsConfig,
-		Proxy:           http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   time.Duration(config.ConnectTimeout) * time.Second,
-			KeepAlive: time.Duration(config.KeepAliveTimeout) * time.Second,
-		}).DialContext,
-		TLSHandshakeTimeout:   time.Duration(config.ConnectTimeout) * time.Second,
-		MaxIdleConnsPerHost:   config.MaxIdleConnectionsPerHost,
-		ResponseHeaderTimeout: time.Duration(config.RequestTimeout) * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		DisableKeepAlives:     !config.KeepAlive,
-	}
-}
-
-func DefaultTransport(config Config) *http.Transport {
-	transport := DefaultPooledTransport(config)
-	transport.DisableKeepAlives = true
-	transport.MaxIdleConnsPerHost = -1
-	return transport
+	circuitBreaker            bool
 }
 
 func setDefaults(config *Config) {
@@ -88,7 +65,6 @@ func NewClient(config Config) *http.Client {
 // across hosts with keepalive on, you can set the number of idle connections per host
 // with Config.MaxIdleConnsPerHost (default 1)
 func NewPooledClient(config Config) *http.Client {
-
 	setDefaults(&config)
 
 	return &http.Client{

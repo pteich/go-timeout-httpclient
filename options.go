@@ -4,6 +4,7 @@ import "crypto/tls"
 
 type Option func(c *Config)
 
+// WithTimeout sets all timeouts to the provided value in seconds
 func WithTimeout(timeout int) Option {
 	return func(c *Config) {
 		c.ConnectTimeout = timeout
@@ -39,5 +40,11 @@ func WithMaxIdleConnections(count int) Option {
 func WithTlsConfig(tlsConfig *tls.Config) Option {
 	return func(c *Config) {
 		c.tlsConfig = tlsConfig
+	}
+}
+
+func WithCircuitBreaker() Option {
+	return func(c *Config) {
+		c.circuitBreaker = true
 	}
 }
