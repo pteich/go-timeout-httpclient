@@ -1,6 +1,9 @@
 package timeouthttp
 
-import "crypto/tls"
+import (
+	"crypto/tls"
+	"net/http"
+)
 
 type Option func(c *Config)
 
@@ -46,5 +49,18 @@ func WithTlsConfig(tlsConfig *tls.Config) Option {
 func WithCircuitBreaker() Option {
 	return func(c *Config) {
 		c.circuitBreaker = true
+	}
+}
+
+func WithPooledTransport(maxIdleConnectionsPerHost int) Option {
+	return func(c *Config) {
+		c.pooledTransport = true
+		c.MaxIdleConnectionsPerHost = maxIdleConnectionsPerHost
+	}
+}
+
+func WithTransport(t http.RoundTripper) Option {
+	return func(c *Config) {
+		c.transport = t
 	}
 }

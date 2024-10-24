@@ -17,6 +17,8 @@ type Config struct {
 	KeepAlive                 bool
 	tlsConfig                 *tls.Config
 	circuitBreaker            bool
+	transport                 http.RoundTripper
+	pooledTransport           bool
 }
 
 func setDefaults(config *Config) {
@@ -42,8 +44,13 @@ func New(opts ...Option) *http.Client {
 		opt(&config)
 	}
 
+	tr := DefaultTransport(config)
+	if config.pooledTransport {
+		tr = DefaultPooledTransport(config)
+	}
+
 	return &http.Client{
-		Transport: DefaultTransport(config),
+		Transport: tr,
 		Timeout:   time.Duration(config.RequestTimeout) * time.Second,
 	}
 }
@@ -51,7 +58,6 @@ func New(opts ...Option) *http.Client {
 // NewClient returns a new clean HTTP.Client with timeouts (default 1s for connection and request), disabled idle connections
 // and disabled keep-alives
 func NewClient(config Config) *http.Client {
-
 	setDefaults(&config)
 
 	return &http.Client{
@@ -60,7 +66,7 @@ func NewClient(config Config) *http.Client {
 	}
 }
 
-// NewPooledClient returns a new clean HTTP.Client with timeouts  (default 1s for connection and request) and shared transport
+// NewPooledClient returns a new clean HTTP.Client with timeouts (default 1s for connection and request) and shared transport
 // across hosts with keepalive on, you can set the number of idle connections per host
 // with Config.MaxIdleConnsPerHost (default 1)
 func NewPooledClient(config Config) *http.Client {

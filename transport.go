@@ -11,14 +11,18 @@ import (
 )
 
 type Transport struct {
-	ht                   http.Transport
+	ht                   http.RoundTripper
 	enableCircuitBreaker bool
 	breaker              sync.Map
 }
 
 func DefaultPooledTransport(config Config) *Transport {
+	if config.transport != nil {
+		return &Transport{ht: config.transport}
+	}
+
 	return &Transport{
-		ht: http.Transport{
+		ht: &http.Transport{
 			TLSClientConfig: config.tlsConfig,
 			Proxy:           http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
@@ -36,10 +40,26 @@ func DefaultPooledTransport(config Config) *Transport {
 }
 
 func DefaultTransport(config Config) *Transport {
-	transport := DefaultPooledTransport(config)
-	transport.ht.DisableKeepAlives = true
-	transport.ht.MaxIdleConnsPerHost = -1
-	return transport
+	if config.transport != nil {
+		return &Transport{ht: config.transport}
+	}
+
+	return &Transport{
+		ht: &http.Transport{
+			TLSClientConfig: config.tlsConfig,
+			Proxy:           http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   time.Duration(config.ConnectTimeout) * time.Second,
+				KeepAlive: time.Duration(config.KeepAliveTimeout) * time.Second,
+			}).DialContext,
+			TLSHandshakeTimeout:   time.Duration(config.ConnectTimeout) * time.Second,
+			MaxIdleConnsPerHost:   -1,
+			ResponseHeaderTimeout: time.Duration(config.RequestTimeout) * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			DisableKeepAlives:     true,
+		},
+		enableCircuitBreaker: config.circuitBreaker,
+	}
 }
 
 func (t *Transport) RoundTrip(r *http.Request) (*http.Response, error) {
