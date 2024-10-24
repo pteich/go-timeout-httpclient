@@ -16,6 +16,21 @@ type Transport struct {
 	breaker              sync.Map
 }
 
+func NewTransport(opts ...Option) *Transport {
+	config := Config{}
+	setDefaults(&config)
+
+	for _, opt := range opts {
+		opt(&config)
+	}
+
+	if config.pooledTransport {
+		return DefaultPooledTransport(config)
+	}
+
+	return DefaultTransport(config)
+}
+
 func DefaultPooledTransport(config Config) *Transport {
 	if config.transport != nil {
 		return &Transport{ht: config.transport}
